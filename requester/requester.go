@@ -28,6 +28,11 @@ import (
 	"time"
 
 	"golang.org/x/net/http2"
+
+	_ "github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/http3"
+	_ "github.com/lucas-clemente/quic-go/logging"
+	_ "github.com/lucas-clemente/quic-go/qlog"
 )
 
 // Max size of the buffer of result channel.
@@ -65,6 +70,9 @@ type Work struct {
 
 	// H2 is an option to make HTTP/2 requests
 	H2 bool
+
+	// H3 is an option to make HTTP/3 requests
+	H3 bool
 
 	// Timeout in seconds.
 	Timeout int
@@ -233,25 +241,43 @@ func (b *Work) runWorker(client *http.Client, n int) {
 
 func (b *Work) runWorkers() {
 	var wg sync.WaitGroup
+	//	var qconf quic.Config
+	var tr http.RoundTripper
+
 	wg.Add(b.C)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         b.Request.Host,
-		},
-		MaxIdleConnsPerHost: min(b.C, maxIdleConn),
-		DisableCompression:  b.DisableCompression,
-		DisableKeepAlives:   b.DisableKeepAlives,
-		Proxy:               http.ProxyURL(b.ProxyAddr),
-	}
-	if b.H2 {
-		http2.ConfigureTransport(tr)
+	if b.H3 {
+		tr = &http3.RoundTripper{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				ServerName:         b.Request.Host,
+			},
+			// MaxIdleConnsPerHost: min(b.C, maxIdleConn),
+			DisableCompression: b.DisableCompression,
+			// DisableKeepAlives:   b.DisableKeepAlives,
+			// QuicConfig: &qconf,
+			// Proxy:      http.ProxyURL(b.ProxyAddr),
+		}
 	} else {
-		tr.TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
-	}
-	client := &http.Client{Transport: tr, Timeout: time.Duration(b.Timeout) * time.Second}
+		tr = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				ServerName:         b.Request.Host,
+			},
+			MaxIdleConnsPerHost: min(b.C, maxIdleConn),
+			DisableCompression:  b.DisableCompression,
+			DisableKeepAlives:   b.DisableKeepAlives,
+			Proxy:               http.ProxyURL(b.ProxyAddr),
+		}
 
+		if b.H2 {
+			http2.ConfigureTransport(tr.(*http.Transport))
+		} else {
+			(tr.(*http.Transport)).TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
+		}
+	}
+
+	client := &http.Client{Transport: tr, Timeout: time.Duration(b.Timeout) * time.Second}
 	// Ignore the case where b.N % b.C != 0.
 	for i := 0; i < b.C; i++ {
 		go func() {
