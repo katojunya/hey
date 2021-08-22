@@ -52,6 +52,7 @@ Options:
   -a  Basic authentication, username:password.
   -x  HTTP Proxy address as host:port.
   -h2 Enable HTTP/2.
+  -h3 Enable HTTP/3.
 
   -host	HTTP Host header.
 
