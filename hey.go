@@ -58,6 +58,7 @@ var (
 	z = flag.Duration("z", 0, "")
 
 	h2   = flag.Bool("h2", false, "")
+	h3   = flag.Bool("h3", false, "")
 	cpus = flag.Int("cpus", runtime.GOMAXPROCS(-1), "")
 
 	disableCompression = flag.Bool("disable-compression", false, "")
@@ -92,6 +93,7 @@ Options:
   -a  Basic authentication, username:password.
   -x  HTTP Proxy address as host:port.
   -h2 Enable HTTP/2.
+  -h3 Enable HTTP/3. Mutually exclusive with -h2.
 
   -host	HTTP Host header.
 
@@ -114,6 +116,10 @@ func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
 		usageAndExit("")
+	}
+
+	if *h2 && *h3 {
+		usageAndExit("-h2 and -h3 cannot be used together.")
 	}
 
 	runtime.GOMAXPROCS(*cpus)
@@ -232,6 +238,7 @@ func main() {
 		DisableKeepAlives:  *disableKeepAlives,
 		DisableRedirects:   *disableRedirects,
 		H2:                 *h2,
+		H3:                 *h3,
 		ProxyAddr:          proxyURL,
 		Output:             *output,
 	}
