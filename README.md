@@ -22,7 +22,7 @@ macOS:
 
 hey runs provided number of requests in the provided concurrency level and prints stats.
 
-It also supports HTTP2 endpoints.
+It also supports HTTP/2 and HTTP/3 endpoints.
 
 ```
 Usage: hey [options...] <url>
@@ -98,6 +98,11 @@ hey \
 Test with HTTP/2:
 ```
 hey -h2 https://google.com
+```
+
+Test with HTTP/3:
+```
+hey -h3 https://google.com
 ```
 
 Rate limit to 10 queries per second per worker:
