@@ -1,4 +1,4 @@
-FROM golang:1.15 as build
+FROM golang:1.27.1 as build
 
 # Create appuser.
 # See https://stackoverflow.com/a/55757473/12429735
@@ -14,7 +14,7 @@ RUN adduser \
     "${USER}"
 
 RUN apt-get update && apt-get install -y ca-certificates
-RUN go get github.com/rakyll/hey
+RUN go get github.com/katojunya/hey
 
 # Build
 WORKDIR /go/src/github.com/rakyll/hey
