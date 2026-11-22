@@ -2,7 +2,7 @@ module github.com/katojunya/hey
 
 require (
 	github.com/quic-go/quic-go v0.62.0
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 )
 
 require (
